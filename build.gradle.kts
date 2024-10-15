@@ -5,19 +5,36 @@ val templateSettings = object : BlahajSettings {
 	// -------------------- Dependencies ---------------------- //
 	override val depsHandler: BlahajDependencyHandler get() = object : BlahajDependencyHandler {
 		override fun addGlobal(mod : ModData, deps: DependencyHandler) {
-
+			deps.modImplementation("toni.immersivemessages:${mod.loader}-${mod.mcVersion}:1.0.7")
 		}
 
 		override fun addFabric(mod : ModData, deps: DependencyHandler) {
-
+			if (mod.mcVersion == "1.21.1") {
+				deps.modImplementation(modrinth("caxton", "0.6.0-alpha.2+1.21.1-FABRIC"))
+				deps.modImplementation(deps.include("com.github.Chocohead:Fabric-ASM:v2.3") {
+					exclude(group = "net.fabricmc", module = "fabric-loader")
+				})
+			}
+			else {
+				deps.modImplementation(modrinth("caxton", "0.6.0-alpha.2.1+1.20.1-FABRIC"))
+				deps.include(deps.implementation(deps.annotationProcessor("io.github.llamalad7:mixinextras-fabric:0.4.1")!!)!!)
+				deps.modImplementation(deps.include("com.github.Chocohead:Fabric-ASM:v2.3") {
+					exclude(group = "net.fabricmc", module = "fabric-loader")
+				})
+			}
 		}
 
 		override fun addForge(mod : ModData, deps: DependencyHandler) {
+			deps.modImplementation(modrinth("caxton", "0.6.0-alpha.2.1+1.20.1-FORGE"))
+			deps.minecraftRuntimeLibraries("com.github.ben-manes.caffeine:caffeine:3.1.2")
 
+			deps.compileOnly(deps.annotationProcessor("io.github.llamalad7:mixinextras-common:0.4.1")!!)
+			deps.implementation(deps.include("io.github.llamalad7:mixinextras-forge:0.4.1")!!)
 		}
 
 		override fun addNeo(mod : ModData, deps: DependencyHandler) {
-
+			deps.modImplementation(modrinth("caxton", "0.6.0-alpha.2+1.21.1-NEOFORGE"))
+			deps.minecraftRuntimeLibraries("com.github.ben-manes.caffeine:caffeine:3.1.2")
 		}
 	}
 
@@ -74,4 +91,5 @@ repositories {
 	maven("https://maven.su5ed.dev/releases")
 	maven("https://maven.fabricmc.net")
 	maven("https://maven.shedaniel.me/")
+	maven("https://maven.txni.dev/")
 }

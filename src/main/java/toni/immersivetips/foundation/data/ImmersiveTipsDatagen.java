@@ -1,15 +1,15 @@
-package toni.examplemod.foundation.data;
+package toni.immersivetips.foundation.data;
 
 #if FABRIC
 import net.fabricmc.fabric.api.datagen.v1.DataGeneratorEntrypoint;
 import net.fabricmc.fabric.api.datagen.v1.FabricDataGenerator;
-import toni.examplemod.ExampleMod;
+import toni.immersivetips.ImmersiveTips;
 
-public class ExampleModDatagen  implements DataGeneratorEntrypoint {
+public class ImmersiveTipsDatagen  implements DataGeneratorEntrypoint {
 
     @Override
     public String getEffectiveModId() {
-        return ExampleMod.ID;
+        return ImmersiveTips.ID;
     }
 
     @Override

@@ -1,6 +1,6 @@
-package toni.examplemod;
+package toni.immersivetips;
 
-import toni.examplemod.foundation.config.AllConfigs;
+import toni.immersivetips.foundation.config.AllConfigs;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -42,15 +42,15 @@ import net.neoforged.neoforge.client.gui.ConfigurationScreen;
 
 
 #if FORGELIKE
-@Mod("example_mod")
+@Mod("immersivetips")
 #endif
-public class ExampleMod #if FABRIC implements ModInitializer, ClientModInitializer #endif
+public class ImmersiveTips #if FABRIC implements ModInitializer, ClientModInitializer #endif
 {
-    public static final String MODNAME = "Example Mod";
-    public static final String ID = "example_mod";
+    public static final String MODNAME = "Immersive Tips";
+    public static final String ID = "immersivetips";
     public static final Logger LOGGER = LogManager.getLogger(MODNAME);
 
-    public ExampleMod(#if NEO IEventBus modEventBus, ModContainer modContainer #endif) {
+    public ImmersiveTips(#if NEO IEventBus modEventBus, ModContainer modContainer #endif) {
         #if FORGE
         var context = FMLJavaModLoadingContext.get();
         var modEventBus = context.getModEventBus();
@@ -77,9 +77,9 @@ public class ExampleMod #if FABRIC implements ModInitializer, ClientModInitializ
         #if FABRIC
             AllConfigs.register((type, spec) -> {
                 #if AFTER_21_1
-                NeoForgeConfigRegistry.INSTANCE.register(ExampleMod.ID, type, spec);
+                NeoForgeConfigRegistry.INSTANCE.register(ImmersiveTips.ID, type, spec);
                 #else
-                ForgeConfigRegistry.INSTANCE.register(ExampleMod.ID, type, spec);
+                ForgeConfigRegistry.INSTANCE.register(ImmersiveTips.ID, type, spec);
                 #endif
             });
         #endif
@@ -89,7 +89,7 @@ public class ExampleMod #if FABRIC implements ModInitializer, ClientModInitializ
     public void onInitializeClient() {
         #if AFTER_21_1
             #if FABRIC
-            ConfigScreenFactoryRegistry.INSTANCE.register(ExampleMod.ID, ConfigurationScreen::new);
+            ConfigScreenFactoryRegistry.INSTANCE.register(ImmersiveTips.ID, ConfigurationScreen::new);
             #endif
         #endif
     }
