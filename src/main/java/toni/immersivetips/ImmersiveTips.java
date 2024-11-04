@@ -1,11 +1,23 @@
 package toni.immersivetips;
 
+import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
+import net.minecraft.client.gui.screens.*;
+import net.minecraft.server.packs.PackType;
+import toni.immersivetips.api.CollectTips;
+import toni.immersivetips.foundation.ImmersiveTip;
 import toni.immersivetips.foundation.config.AllConfigs;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 
 #if FABRIC
+    import net.fabricmc.loader.api.FabricLoader;
+    import net.fabricmc.api.EnvType;
     import net.fabricmc.api.ClientModInitializer;
     import net.fabricmc.api.ModInitializer;
     #if after_21_1
@@ -26,6 +38,7 @@ import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.minecraftforge.fml.common.FMLCommonHandler;
 #endif
 
 
@@ -38,6 +51,8 @@ import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
 import net.neoforged.neoforge.client.gui.ConfigurationScreen;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.fml.loading.FMLLoader;
 #endif
 
 
@@ -49,6 +64,9 @@ public class ImmersiveTips #if FABRIC implements ModInitializer, ClientModInitia
     public static final String MODNAME = "Immersive Tips";
     public static final String ID = "immersivetips";
     public static final Logger LOGGER = LogManager.getLogger(MODNAME);
+
+    public static Set<Class<? extends Screen>> EnabledScreens = new HashSet<>();
+    public static List<ImmersiveTip> EnabledTips = new ArrayList<>();
 
     public ImmersiveTips(#if NEO IEventBus modEventBus, ModContainer modContainer #endif) {
         #if FORGE
@@ -71,6 +89,9 @@ public class ImmersiveTips #if FABRIC implements ModInitializer, ClientModInitia
         #endif
     }
 
+    public static void addEnabledScreen(Class<? extends Screen> screenClass) {
+        EnabledScreens.add(screenClass);
+    }
 
     #if FABRIC @Override #endif
     public void onInitialize() {
@@ -92,6 +113,19 @@ public class ImmersiveTips #if FABRIC implements ModInitializer, ClientModInitia
             ConfigScreenFactoryRegistry.INSTANCE.register(ImmersiveTips.ID, ConfigurationScreen::new);
             #endif
         #endif
+
+        addEnabledScreen(LevelLoadingScreen.class);
+        addEnabledScreen(PauseScreen.class);
+        addEnabledScreen(ProgressScreen.class);
+        addEnabledScreen(ConnectScreen.class);
+        addEnabledScreen(DeathScreen.class);
+        addEnabledScreen(DisconnectedScreen.class);
+
+        #if AFTER_21_1
+        addEnabledScreen(GenericMessageScreen.class);
+        #endif
+
+        ResourceManagerHelper.get(PackType.CLIENT_RESOURCES).registerReloadListener(new TipsLoader());
     }
 
     // Forg event stubs to call the Fabric initialize methods, and set up cloth config screen
@@ -99,4 +133,15 @@ public class ImmersiveTips #if FABRIC implements ModInitializer, ClientModInitia
     public void commonSetup(FMLCommonSetupEvent event) { onInitialize(); }
     public void clientSetup(FMLClientSetupEvent event) { onInitializeClient(); }
     #endif
+
+    public static boolean isDedicatedServer() {
+        #if FABRIC
+        return FabricLoader.getInstance().getEnvironmentType() == EnvType.SERVER;
+        #elif NEO
+        return FMLLoader.getDist() == Dist.DEDICATED_SERVER;
+        #else
+        return FMLCommonHandler.instance().getMinecraftServerInstance().isDedicatedServer();
+        #endif
+    }
+
 }

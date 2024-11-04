@@ -5,7 +5,10 @@ val templateSettings = object : BlahajSettings {
 	// -------------------- Dependencies ---------------------- //
 	override val depsHandler: BlahajDependencyHandler get() = object : BlahajDependencyHandler {
 		override fun addGlobal(mod : ModData, deps: DependencyHandler) {
-			deps.modImplementation("toni.immersivemessages:${mod.loader}-${mod.mcVersion}:1.0.7")
+			deps.modImplementation("com.github.ben-manes.caffeine:caffeine:3.1.2")
+			deps.modImplementation("toni.immersivemessages:${mod.loader}-${mod.mcVersion}:1.0.14") {
+				isTransitive = false
+			}
 		}
 
 		override fun addFabric(mod : ModData, deps: DependencyHandler) {
