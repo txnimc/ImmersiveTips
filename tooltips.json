@@ -1,0 +1,18 @@
+[
+    {
+        "tooltipLines": [
+            "It's definitely wood!"
+        ],
+        "id": "minecraft:oak_planks",
+        "modId": "minecraft",
+        "itemName": "oak_planks"
+    },
+    {
+        "tooltipLines": [
+            "Remember to carry a water bucket!"
+        ],
+        "id": "water_bucket_help",
+        "title": "Tip",
+        "priority": "LOW"
+    }
+]

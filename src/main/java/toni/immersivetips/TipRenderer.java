@@ -3,7 +3,6 @@ package toni.immersivetips;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import toni.immersivemessages.api.ImmersiveMessage;
-import toni.immersivetips.foundation.ImmersiveTip;
 import toni.immersivetips.foundation.config.AllConfigs;
 
 import lombok.Getter;
@@ -33,13 +32,13 @@ public class TipRenderer {
             return;
 
 
-        if (ImmersiveTips.EnabledTips.isEmpty()) {
+        if (ImmersiveTips.AllTips.isEmpty()) {
             return;
         }
 
         if (tooltipQueue.isEmpty())
         {
-            var randomTip = ImmersiveTips.EnabledTips.get((int) (Math.random() * ImmersiveTips.EnabledTips.size()));
+            var randomTip = ImmersiveTips.getNextTip();
             randomTip.getMessage().animation.resetPlayhead(0f);
             if (randomTip.getMessage().subtext != null)
                 randomTip.getMessage().subtext.animation.resetPlayhead(0f);

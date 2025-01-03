@@ -9,6 +9,8 @@ import net.minecraft.util.StringRepresentable;
 import toni.immersivemessages.api.ImmersiveMessage;
 import toni.immersivemessages.api.TextAnchor;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 
 public class ImmersiveTip {
@@ -16,6 +18,7 @@ public class ImmersiveTip {
         instance.group(
             Codec.STRING.optionalFieldOf("title").forGetter((tip) -> Optional.ofNullable(tip.title)),
             Codec.STRING.optionalFieldOf("literal").forGetter((tip) -> Optional.ofNullable(tip.literal)),
+            Codec.STRING.optionalFieldOf("condition").forGetter((tip) -> Optional.ofNullable(tip.condition)),
             ResourceLocation.CODEC.optionalFieldOf("translate").forGetter((tip) -> Optional.ofNullable(tip.translate)),
             Codec.FLOAT.optionalFieldOf("duration").forGetter((tip) -> Optional.of(tip.duration)),
             Codec.INT.optionalFieldOf("multiplier").forGetter((tip) -> Optional.of(tip.multiplier)),
@@ -25,23 +28,23 @@ public class ImmersiveTip {
 
     private ImmersiveMessage cachedMessage;
 
-    public float duration;
-    public int multiplier;
-    public Priority priority;
     public String title;
     public String literal = "";
     public ResourceLocation translate;
 
+    public Priority priority = Priority.LOW;
+    public float duration = 15f;
+    public int multiplier = -1;
+    public String condition = "";
+
     public ImmersiveTip(String title, String literal) {
         this.title = title;
         this.literal = literal;
-        this.duration = 15f;
     }
 
     public ImmersiveTip(String title, ResourceLocation translate) {
         this.title = title;
         this.translate = translate;
-        this.duration = 15f;
     }
 
     public ImmersiveTip(String title, String literal, float duration) {
@@ -59,6 +62,7 @@ public class ImmersiveTip {
     public ImmersiveTip(
         Optional<String> title,
         Optional<String> literal,
+        Optional<String> condition,
         Optional<ResourceLocation> translate,
         Optional<Float> duration,
         Optional<Integer> multiplier,
@@ -66,9 +70,10 @@ public class ImmersiveTip {
     {
         this.title = title.orElse("Tip");
         this.literal = literal.orElse("");
+        this.condition = condition.orElse("");
         this.translate = translate.orElse(null);
         this.duration = duration.orElse(15f);
-        this.multiplier = multiplier.orElse(1);
+        this.multiplier = multiplier.orElse(-1);
         this.priority = priority.orElse(Priority.MEDIUM);
     }
 
@@ -112,6 +117,8 @@ public class ImmersiveTip {
         IMMEDIATE("immediate");
 
         public static final Codec<Priority> CODEC = StringRepresentable.fromEnum(Priority::values);
+        public static final List<Priority> VALUES = Arrays.stream(Priority.values()).toList();
+
         private final String name;
 
         Priority(String name) {

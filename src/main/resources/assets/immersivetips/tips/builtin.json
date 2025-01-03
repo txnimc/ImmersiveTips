@@ -1,10 +1,26 @@
 {
-  "high": [
+  "immediate": [
     {
-      "title": "Remember to open your quest book!"
+      "title": "Check Out the Quest Book!",
+      "literal": "Quests are accessible from the button in the top left corner of your inventory!",
+      "condition": "minutes < 20",
+      "multiplier": 5,
+      "duration": 20
     }
   ],
-  "low": [
-
+  "high": [
+    {
+      "title": "High Priority!",
+      "literal": "Test Message",
+      "condition": "hasAchievement minecraft:end/kill_dragon",
+      "duration": 15
+    }
+  ],
+  "medium": [
+    {
+      "title": "Medium Priority!",
+      "literal": "Test Message",
+      "duration": 20
+    }
   ]
 }
