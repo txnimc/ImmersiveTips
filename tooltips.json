@@ -1,7 +1,7 @@
 [
     {
         "tooltipLines": [
-            "It's definitely wood!"
+            "§6It's definitely wood!"
         ],
         "id": "minecraft:oak_planks",
         "modId": "minecraft",
