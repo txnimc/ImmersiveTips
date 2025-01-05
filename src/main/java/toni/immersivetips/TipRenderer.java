@@ -27,18 +27,21 @@ public class TipRenderer {
     private static ImmersiveMessage currentTooltip;
 
     public static void drawOnScreen(GuiGraphics graphics, Screen screen, float delta) {
-        var isEnabled = ImmersiveTips.EnabledScreens.contains(screen.getClass()) || AllConfigs.client().whitelistedScreens.get().contains(screen.getClass().getName());
+        var isEnabled = ImmersiveTipsClient.EnabledScreens.contains(screen.getClass()) || AllConfigs.client().whitelistedScreens.get().contains(screen.getClass().getName());
         if (!isEnabled || AllConfigs.client().blacklistedScreens.get().contains(screen.getClass().getName()))
             return;
 
 
-        if (ImmersiveTips.AllTips.isEmpty()) {
+        if (ImmersiveTips.LocalTips.isEmpty() && ImmersiveTips.RemoteTips.isEmpty()) {
             return;
         }
 
         if (tooltipQueue.isEmpty())
         {
             var randomTip = ImmersiveTips.getNextTip();
+            if (randomTip == null)
+                 return;
+
             randomTip.getMessage().animation.resetPlayhead(0f);
             if (randomTip.getMessage().subtext != null)
                 randomTip.getMessage().subtext.animation.resetPlayhead(0f);
@@ -52,11 +55,6 @@ public class TipRenderer {
 
     static void render(GuiGraphics graphics, float delta) {
         long currentTime = System.nanoTime();
-//        if (Minecraft.getInstance().isPaused())
-//        {
-//            lastTime = currentTime;
-//            return;
-//        }
 
         var partialTicks = (currentTime - lastTime) / NANOSECONDS_PER_TICK;
         lastTime = currentTime;
@@ -90,7 +88,7 @@ public class TipRenderer {
 
     private static ITooltipRenderer initRenderer() {
         if (PlatformUtils.isModLoaded("caxton"))
-            return new CaxtonRenderer();
+           return new CaxtonRenderer();
 
         return new VanillaRenderer();
     }

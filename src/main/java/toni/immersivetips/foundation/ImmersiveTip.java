@@ -106,6 +106,10 @@ public class ImmersiveTip {
     }
 
 
+    public int hashCode() {
+        return ((translate != null ? translate.getPath() : "") + literal).hashCode();
+    }
+
     private String getText() {
         return translate == null ? literal : Component.translatableWithFallback(translate.getPath(), literal).getString();
     }

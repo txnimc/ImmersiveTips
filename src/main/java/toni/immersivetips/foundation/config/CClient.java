@@ -37,11 +37,6 @@ import net.neoforged.neoforge.common.ModConfigSpec.*;
 #endif
 
 public class CClient extends ConfigBase {
-
-    public final ConfigGroup client = group(0, "client", "Client-only settings - If you're looking for general settings, look inside your world's serverconfig folder!");
-
-    public final ConfigBool example = b(true, "example", "Example Boolean");
-
     public final CValue<List<String>, ConfigValue<List<String>>> whitelistedScreens
         = new CValue<>("Whitelisted Screens", builder -> builder.define("Whitelisted Screens", new ArrayList<>()), "Sets screens to manually enable tips on.");
 

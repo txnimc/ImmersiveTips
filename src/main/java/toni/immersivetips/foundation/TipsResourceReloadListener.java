@@ -1,4 +1,4 @@
-package toni.immersivetips;
+package toni.immersivetips.foundation;
 
 import com.google.gson.JsonObject;
 import com.mojang.serialization.Codec;
@@ -6,9 +6,8 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.fabricmc.fabric.api.resource.SimpleSynchronousResourceReloadListener;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
+import toni.immersivetips.ImmersiveTips;
 import toni.immersivetips.api.CollectTips;
-import toni.immersivetips.foundation.ImmersiveTip;
-import toni.immersivetips.foundation.LegacyTip;
 import toni.lib.utils.VersionUtils;
 
 import com.mojang.serialization.JsonOps;
@@ -21,7 +20,7 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 
-class TipsLoader implements SimpleSynchronousResourceReloadListener {
+public class TipsResourceReloadListener implements SimpleSynchronousResourceReloadListener {
     public static final Codec<LegacyTip> LEGACY_TIP_CODEC = RecordCodecBuilder.create(instance ->
         instance.group(
             ResourceLocation.CODEC.fieldOf("translate").forGetter((tip) -> tip.translate)
@@ -36,10 +35,10 @@ class TipsLoader implements SimpleSynchronousResourceReloadListener {
     @Override
     public void onResourceManagerReload(ResourceManager manager) {
         var tips = new ArrayList<ImmersiveTip>();
-        ImmersiveTips.AllTips.clear();
+        ImmersiveTips.LocalTips.clear();
         CollectTips.EVENT.invoker().onCollectTips(tips);
         addDefaultTips(tips);
-        ImmersiveTips.AllTips.addAll(tips);
+        ImmersiveTips.LocalTips.addAll(tips);
 
         var resources = manager.listResources("tips", (path) -> true);
         for (ResourceLocation id : resources.keySet()) {
@@ -59,11 +58,21 @@ class TipsLoader implements SimpleSynchronousResourceReloadListener {
         loadEnabledTips();
     }
 
-    private void loadEnabledTips() {
+    public static void loadEnabledTips() {
         ImmersiveTips.EnabledTips.clear();
         ImmersiveTip.Priority.VALUES.forEach(priority -> ImmersiveTips.EnabledTips.put(priority, new ArrayList<>()));
 
-        for (ImmersiveTip tip : ImmersiveTips.AllTips) {
+        for (ImmersiveTip tip : ImmersiveTips.LocalTips) {
+            if (ImmersiveTips.persistentData.seenTips.contains(tip.hashCode()))
+                continue;
+
+            ImmersiveTips.EnabledTips.get(tip.priority).add(tip);
+        }
+
+        for (ImmersiveTip tip : ImmersiveTips.RemoteTips) {
+            if (ImmersiveTips.persistentData.seenTips.contains(tip.hashCode()))
+                continue;
+
             ImmersiveTips.EnabledTips.get(tip.priority).add(tip);
         }
     }
@@ -109,7 +118,7 @@ class TipsLoader implements SimpleSynchronousResourceReloadListener {
                     if (tip.priority == ImmersiveTip.Priority.IMMEDIATE)
                         tip.multiplier = Math.max(tip.multiplier, 1);
 
-                    ImmersiveTips.AllTips.add(tip);
+                    ImmersiveTips.LocalTips.add(tip);
                 });
         });
     }
@@ -128,7 +137,7 @@ class TipsLoader implements SimpleSynchronousResourceReloadListener {
 
             LEGACY_TIP_CODEC.parse(JsonOps.INSTANCE, tipElement)
                 .resultOrPartial(errorMsg -> ImmersiveTips.LOGGER.error("Failed to decode LegacyTip: {}", errorMsg))
-                .ifPresent(legacyTip -> ImmersiveTips.AllTips.add(new ImmersiveTip("Tip", legacyTip.translate)));
+                .ifPresent(legacyTip -> ImmersiveTips.LocalTips.add(new ImmersiveTip("Tip", legacyTip.translate)));
 
         } catch (IOException e) {
             ImmersiveTips.LOGGER.error("Error occurred while reading stream for resource tip {}", id.toString(), e);

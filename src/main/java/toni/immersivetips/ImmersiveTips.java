@@ -1,16 +1,18 @@
 package toni.immersivetips;
 
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
-import net.minecraft.client.gui.screens.*;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.PackType;
 import toni.immersivetips.foundation.ImmersiveTip;
-import toni.immersivetips.foundation.config.AllConfigs;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import toni.immersivetips.foundation.TipsPersistentData;
+import toni.immersivetips.foundation.TipsResourceReloadListener;
+import toni.immersivetips.foundation.config.AllConfigs;
 
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
-
 
 #if FABRIC
     import net.fabricmc.loader.api.FabricLoader;
@@ -35,7 +37,8 @@ import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
-import net.minecraftforge.fml.common.FMLCommonHandler;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.fml.loading.FMLLoader;
 #endif
 
 
@@ -45,7 +48,6 @@ import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
-import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
 import net.neoforged.neoforge.client.gui.ConfigurationScreen;
 import net.neoforged.api.distmarker.Dist;
@@ -63,17 +65,22 @@ public class ImmersiveTips #if FABRIC implements ModInitializer, ClientModInitia
     public static final Logger LOGGER = LogManager.getLogger(MODNAME);
     private static final Random random = new Random();
 
-    public static Set<Class<? extends Screen>> EnabledScreens = new HashSet<>();
+    public static TipsPersistentData persistentData;
 
-    public static List<ImmersiveTip> AllTips = new ArrayList<>();
+    public static List<ImmersiveTip> LocalTips = new ArrayList<>();
+    public static List<ImmersiveTip> RemoteTips = new ArrayList<>();
+
     public static Map<ImmersiveTip.Priority, List<ImmersiveTip>> EnabledTips = new HashMap<>();
     public static List<ImmersiveTip> DisabledTips = new ArrayList<>();
+    public static Map<ResourceLocation, List<Component>> ItemTooltips = new HashMap<>();
 
     public ImmersiveTips(#if NEO IEventBus modEventBus, ModContainer modContainer #endif) {
         #if FORGE
         var context = FMLJavaModLoadingContext.get();
         var modEventBus = context.getModEventBus();
         #endif
+
+        ResourceManagerHelper.get(PackType.CLIENT_RESOURCES).registerReloadListener(new TipsResourceReloadListener());
 
         #if FORGELIKE
         modEventBus.addListener(this::commonSetup);
@@ -84,7 +91,6 @@ public class ImmersiveTips #if FABRIC implements ModInitializer, ClientModInitia
             ModLoadingContext.get().registerConfig(type, spec);
             #elif NEO
             modContainer.registerConfig(type, spec);
-            modContainer.registerExtensionPoint(IConfigScreenFactory.class, ConfigurationScreen::new);
             #endif
         });
         #endif
@@ -100,18 +106,27 @@ public class ImmersiveTips #if FABRIC implements ModInitializer, ClientModInitia
         var medium = EnabledTips.get(ImmersiveTip.Priority.MEDIUM);
         var low = EnabledTips.get(ImmersiveTip.Priority.LOW);
 
+        var highSize = high != null && !high.isEmpty() ? high.size() : 0;
+        var mediumSize = high != null && !high.isEmpty() ? high.size() : 0;
+
+        var highWeight = (1f - Math.max(0.3f, Math.min(0.4f, highSize * 0.02f)));
+        var mediumWeight = (highWeight - Math.max(0.3f, Math.min(0.3f, mediumSize * 0.02f)));
+
         if (immediate != null && !immediate.isEmpty()) {
             list = immediate;
         }
-        else if (weight > 0.5f && high != null && !high.isEmpty()) {
+        else if (high != null && !high.isEmpty() && weight > highWeight) {
             list = high;
         }
-        else if (weight > 0.25f  && medium != null && !medium.isEmpty()) {
+        else if (medium != null && !medium.isEmpty() && weight > mediumWeight) {
             list = medium;
         }
         else {
             list = low;
         }
+
+        if (list == null || list.isEmpty())
+            return null;
 
         ImmersiveTip tip = list.get(random.nextInt(list.size()));
 
@@ -120,16 +135,14 @@ public class ImmersiveTips #if FABRIC implements ModInitializer, ClientModInitia
             if (tip.multiplier <= 0) {
                 list.remove(tip);
                 DisabledTips.add(tip);
+                persistentData.seenTips.add(tip.hashCode());
+                persistentData.save();
             }
         }
 
         return tip;
     }
 
-
-    public static void addEnabledScreen(Class<? extends Screen> screenClass) {
-        EnabledScreens.add(screenClass);
-    }
 
     #if FABRIC @Override #endif
     public void onInitialize() {
@@ -146,35 +159,11 @@ public class ImmersiveTips #if FABRIC implements ModInitializer, ClientModInitia
 
     #if FABRIC @Override #endif
     public void onInitializeClient() {
-        #if AFTER_21_1
-            #if FABRIC
-            ConfigScreenFactoryRegistry.INSTANCE.register(ImmersiveTips.ID, ConfigurationScreen::new);
-            #endif
-        #endif
+        persistentData = TipsPersistentData.load();
 
-        addEnabledScreen(LevelLoadingScreen.class);
-        addEnabledScreen(PauseScreen.class);
-        addEnabledScreen(ProgressScreen.class);
-        addEnabledScreen(ConnectScreen.class);
-        addEnabledScreen(DeathScreen.class);
-        addEnabledScreen(DisconnectedScreen.class);
+        ImmersiveTipsClient.init();
 
-        #if AFTER_21_1
-        addEnabledScreen(GenericMessageScreen.class);
-        #endif
-
-        ResourceManagerHelper.get(PackType.CLIENT_RESOURCES).registerReloadListener(new TipsLoader());
-
-        String url = "https://raw.githubusercontent.com/your-repo/your-project/main/data.json";
-        CompletableFuture.supplyAsync(() -> RemoteTipConfig.fetchAndParseJson(url))
-            .thenAccept(remoteTipConfigs -> {
-                // Process the parsed list on completion
-                if (remoteTipConfigs != null) {
-                    remoteTipConfigs.forEach(System.out::println);
-                } else {
-                    System.err.println("Failed to fetch or parse data.");
-                }
-            });
+        ClientLifecycleEvents.CLIENT_STOPPING.register((mc) -> ImmersiveTips.persistentData.save());
     }
 
     // Forg event stubs to call the Fabric initialize methods, and set up cloth config screen
@@ -189,7 +178,7 @@ public class ImmersiveTips #if FABRIC implements ModInitializer, ClientModInitia
         #elif NEO
         return FMLLoader.getDist() == Dist.DEDICATED_SERVER;
         #else
-        return FMLCommonHandler.instance().getMinecraftServerInstance().isDedicatedServer();
+        return FMLLoader.getDist() == Dist.DEDICATED_SERVER;
         #endif
     }
 

@@ -6,7 +6,7 @@ val templateSettings = object : BlahajSettings {
 	override val depsHandler: BlahajDependencyHandler get() = object : BlahajDependencyHandler {
 		override fun addGlobal(mod : ModData, deps: DependencyHandler) {
 			deps.modImplementation("com.github.ben-manes.caffeine:caffeine:3.1.2")
-			deps.modImplementation("toni.immersivemessages:${mod.loader}-${mod.mcVersion}:1.0.14") {
+			deps.modImplementation("toni.immersivemessages:${mod.loader}-${mod.mcVersion}:1.0.15") {
 				isTransitive = false
 			}
 		}
@@ -33,11 +33,15 @@ val templateSettings = object : BlahajSettings {
 
 			deps.compileOnly(deps.annotationProcessor("io.github.llamalad7:mixinextras-common:0.4.1")!!)
 			deps.implementation(deps.include("io.github.llamalad7:mixinextras-forge:0.4.1")!!)
+
+			deps.modImplementation(deps.include("dev.su5ed.sinytra.fabric-api:fabric-api:0.92.2+1.11.9+1.20.1")!!)
 		}
 
 		override fun addNeo(mod : ModData, deps: DependencyHandler) {
 			deps.modImplementation(modrinth("caxton", "0.6.0-alpha.2+1.21.1-NEOFORGE"))
 			deps.minecraftRuntimeLibraries("com.github.ben-manes.caffeine:caffeine:3.1.2")
+
+			deps.modImplementation(deps.include("org.sinytra.forgified-fabric-api:forgified-fabric-api:0.107.0+2.0.22+1.21.1")!!)
 		}
 	}
 
